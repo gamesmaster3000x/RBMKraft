@@ -136,8 +136,10 @@
     <ClCompile Include="include\glad\glad.c" />
     <ClCompile Include="Source\Main.cpp" />
     <ClCompile Include="Source\Shaders\ShaderLoader.cpp" />
+    <ClCompile Include="Source\Textures\stb_image.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Source\Main.h" />
     <ClInclude Include="Source\Shaders\ShaderLoader.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
