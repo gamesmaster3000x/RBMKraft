@@ -20,6 +20,8 @@ class ShaderProgram
 public:
 	unsigned int ID;
 
+	ShaderProgram();
+
 	ShaderProgram(const unsigned int shaders[6]);
 
 	bool LinkProgram();

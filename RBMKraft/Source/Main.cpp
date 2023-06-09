@@ -6,11 +6,11 @@
 #include <Shaders/ShaderLoader.h>
 #include <Textures/stb_image.h>
 
-float vertices[] = { //(X, Y, Z), (R, G, B), (UVX, UVY) 
-    0.5f,  -0.5f, 0.0f,    0.0f, 0.0f, 0.0f,    1.0f, 1.0f,//BR
-    -0.5f, -0.5f, 0.0f,    1.0f, 0.0f, 0.0f,    0.0f, 1.0f,//BL
-    -0.5f, 0.5f,  0.0f,    0.0f, 1.0f, 0.0f,    0.0f, 0.0f,//TL
-    0.5f,  0.5f,  0.0f,    0.0f, 0.0f, 1.0f,    1.0f, 0.0f //TR
+float vertices[] = { //(X, Y, Z), Brightness, (UVX, UVY) 
+    0.5f,  -0.5f, 0.0f,    1.0f,    1.0f, 1.0f,//BR
+    -0.5f, -0.5f, 0.0f,    1.0f,    0.0f, 1.0f,//BL
+    -0.5f, 0.5f,  0.0f,    1.0f,    0.0f, 0.0f,//TL
+    0.5f,  0.5f,  0.0f,    1.0f,    1.0f, 0.0f //TR
 };
 
 unsigned int indices[] = {
@@ -20,7 +20,7 @@ unsigned int indices[] = {
 
 
 static GLFWwindow* window;
-
+static ShaderProgram shaderProgram;
 
 unsigned int loadMesh()
 {
@@ -39,16 +39,47 @@ unsigned int loadMesh()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(4 * sizeof(float)));
     glEnableVertexAttribArray(2);
 
     return VAO;
+}
+
+unsigned int loadTexture()
+{
+    unsigned int texture;
+    int width, height, nrChannels;
+    unsigned char* data = stbi_load("Assets/Textures/Blocks/Test.png", &width, &height, &nrChannels, 0);
+
+    if (!data)
+    {
+        fprintf(stderr, "Failed to read image file.\n");
+        glfwTerminate();
+        return -1;
+    }
+    else
+    {
+        fprintf(stdout, "Successfully read image file.\n");
+    }
+
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    stbi_image_free(data);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    return texture;
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -74,7 +105,7 @@ int init()
     }
     fprintf(stdout, "Sucessfully initialised GLFW.\n");
 
-    window = glfwCreateWindow(800, 800, "RBMKraft", NULL, NULL);
+    window = glfwCreateWindow(800, 600, "RBMKraft", NULL, NULL);
     glfwMakeContextCurrent(window);
 
     fprintf(stdout, "Initialising GLAD...\n");
@@ -90,6 +121,20 @@ int init()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
+    unsigned int vertexShader;
+    unsigned int fragmentShader;
+    vertexShader = ShaderLoader::LoadShader(GL_VERTEX_SHADER, "Assets/Shaders/VertexShaders/VertShader.shader");
+    fragmentShader = ShaderLoader::LoadShader(GL_FRAGMENT_SHADER, "Assets/Shaders/FragmentShaders/FragShader.shader");
+
+    shaderProgram = *(new ShaderProgram(new unsigned int[6] {vertexShader, fragmentShader, 0, 0, 0, 0}));
+    shaderProgram.LinkProgram();
+
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
     return 1;
 }
 
@@ -101,56 +146,16 @@ int main(void)
         return -1;
     }
 
-    unsigned int vertexShader;
-    unsigned int fragmentShader;
-    vertexShader = ShaderLoader::LoadShader(GL_VERTEX_SHADER, "Assets/Shaders/VertexShaders/StraightThroughRGB.shader");
-    fragmentShader = ShaderLoader::LoadShader(GL_FRAGMENT_SHADER, "Assets/Shaders/FragmentShaders/CustomVertColor.shader");
-
-    ShaderProgram shaderProgram = *(new ShaderProgram(new unsigned int[6] {vertexShader, fragmentShader, 0, 0, 0, 0}));
-    shaderProgram.LinkProgram();
-
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-
     unsigned int VAO = loadMesh();
+    unsigned int texture = loadTexture();
 
-
-    int width, height, nrChannels;
-    unsigned char* data = stbi_load("Assets/Textures/Blocks/Test.png", &width, &height, &nrChannels, 0);
-
-    if (!data)
-    {
-        fprintf(stderr, "Failed to read image file.\n"); 
-        glfwTerminate();
-        return -1;
-    }
-    else
-    {
-        fprintf(stdout, "Successfully read image file.\n");
-    }
-
-    unsigned int texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-    glGenerateMipmap(GL_TEXTURE_2D);
-    stbi_image_free(data);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-
-    glViewport(0, 0, 800, 800);
-
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glViewport(0, 0, 800, 600);
 
     while (!glfwWindowShouldClose(window)) 
     {
         processInput();
 
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClearColor(0.0f, 0.5f, 0.8f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         shaderProgram.Use();

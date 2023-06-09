@@ -65,6 +65,11 @@ ShaderProgram::ShaderProgram(const unsigned int shaders[6])
 	}
 }
 
+ShaderProgram::ShaderProgram()
+{
+	this->ID = 0;
+}
+
 bool ShaderProgram::LinkProgram()
 {
 	fprintf(stdout, "Linking shader program...\n");
