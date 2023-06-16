@@ -9,7 +9,7 @@
 
 enum Shaders { Vertex = 1, Fragment = 2 };
 
-static class ShaderLoader 
+class ShaderLoader 
 {
 public:
 	static unsigned int LoadShader(const unsigned int type, const char* name);

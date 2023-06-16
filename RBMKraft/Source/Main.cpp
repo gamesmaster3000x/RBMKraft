@@ -5,12 +5,13 @@
 #include <iostream>
 #include <Shaders/ShaderLoader.h>
 #include <Textures/stb_image.h>
+#include <Profiler/Profiler.h>
 
 float vertices[] = { //(X, Y, Z), Brightness, (UVX, UVY) 
-    0.5f,  -0.5f, 0.0f,    1.0f,    1.0f, 1.0f,//BR
-    -0.5f, -0.5f, 0.0f,    1.0f,    0.0f, 1.0f,//BL
-    -0.5f, 0.5f,  0.0f,    1.0f,    0.0f, 0.0f,//TL
-    0.5f,  0.5f,  0.0f,    1.0f,    1.0f, 0.0f //TR
+    0.5f,  -0.5f, 0.0f, 1.0f, 1.0f,//BR
+    -0.5f, -0.5f, 0.0f, 0.0f, 1.0f,//BL
+    -0.5f, 0.5f,  0.0f, 0.0f, 0.0f,//TL
+    0.5f,  0.5f,  0.0f, 1.0f, 0.0f //TR
 };
 
 unsigned int indices[] = {
@@ -27,7 +28,7 @@ unsigned int loadMesh()
     unsigned int VAO;
     unsigned int VBO;
     unsigned int EBO;
-
+    
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
 
@@ -39,14 +40,11 @@ unsigned int loadMesh()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
-
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(4 * sizeof(float)));
-    glEnableVertexAttribArray(2);
 
     return VAO;
 }
@@ -140,6 +138,8 @@ int init()
 
 int main(void)
 {
+    Profiler* profiler = new Profiler();
+
     if (!init())
     {
         glfwTerminate();
@@ -151,8 +151,11 @@ int main(void)
 
     glViewport(0, 0, 800, 600);
 
+    std::cout << (*profiler).GetTotal() << '\n';
+
     while (!glfwWindowShouldClose(window)) 
     {
+        (*profiler).SetLap();
         processInput();
 
         glClearColor(0.0f, 0.5f, 0.8f, 1.0f);
@@ -168,6 +171,7 @@ int main(void)
 
         glfwPollEvents();
         glfwSwapBuffers(window);
+        std::cout << (1/(*profiler).GetLap()) << " FPS\n";
     }
 
     glfwTerminate();

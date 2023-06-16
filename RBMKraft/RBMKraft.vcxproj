@@ -134,11 +134,15 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="include\glad\glad.c" />
+    <ClCompile Include="Source\Profiler\Profiler.cpp" />
+    <ClCompile Include="Source\Meshes\Mesh.cpp" />
     <ClCompile Include="Source\Main.cpp" />
     <ClCompile Include="Source\Shaders\ShaderLoader.cpp" />
     <ClCompile Include="Source\Textures\stb_image.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Source\Profiler\Profiler.h" />
+    <ClInclude Include="Source\Meshes\Mesh.h" />
     <ClInclude Include="Source\Main.h" />
     <ClInclude Include="Source\Shaders\ShaderLoader.h" />
   </ItemGroup>
