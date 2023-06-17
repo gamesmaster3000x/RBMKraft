@@ -133,7 +133,6 @@ void processInput()
     {
         camPos -= glm::vec3(0.0f, -1.0f, 0.0f) * (float)keySensitivity;
     }
-    std::cout << camMatrix[2].z << "\n";
 }
 
 int init()
