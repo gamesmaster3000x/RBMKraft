@@ -55,35 +55,35 @@ unsigned int ShaderLoader::LoadShader(const unsigned int type, const char* name)
 
 ShaderProgram::ShaderProgram(const unsigned int shaders[6])
 {
-	this->ID = glCreateProgram();
+	ID = glCreateProgram();
 	for (unsigned short i = 0; i < 6; i++)
 	{
 		if (shaders[i])
 		{
-			glAttachShader(this->ID, shaders[i]);
+			glAttachShader(ID, shaders[i]);
 		}
 	}
 }
 
 ShaderProgram::ShaderProgram()
 {
-	this->ID = 0;
+	ID = 0;
 }
 
 bool ShaderProgram::LinkProgram()
 {
 	fprintf(stdout, "Linking shader program...\n");
 
-	glLinkProgram(this->ID);
+	glLinkProgram(ID);
 
 	int success;
 	char infoLog[512];
 
-	glGetProgramiv(this->ID, GL_LINK_STATUS, &success);
+	glGetProgramiv(ID, GL_LINK_STATUS, &success);
 
 	if (!success)
 	{
-		glGetShaderInfoLog(this->ID, 512, NULL, infoLog);
+		glGetShaderInfoLog(ID, 512, NULL, infoLog);
 		fprintf(stderr, infoLog);
 		fprintf(stderr, "\n");
 	}
@@ -97,5 +97,10 @@ bool ShaderProgram::LinkProgram()
 
 void ShaderProgram::Use()
 {
-	glUseProgram(this->ID);
+	glUseProgram(ID);
+}
+
+void ShaderProgram::SetMat4(const char* name, glm::mat4 value)
+{
+	glUniformMatrix4fv(glGetUniformLocation(ID, name), 1, false, glm::value_ptr(value));
 }

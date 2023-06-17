@@ -1,5 +1,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <stdio.h>
 #include <math.h>
 #include <iostream>
@@ -21,7 +24,9 @@ unsigned int indices[] = {
 
 
 static GLFWwindow* window;
-static ShaderProgram shaderProgram;
+static ShaderProgram* shaderProgram;
+static int windowWidth = 800;
+static int windowHeight = 600;
 
 unsigned int loadMesh()
 {
@@ -82,6 +87,9 @@ unsigned int loadTexture()
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
+    windowWidth = width;
+    windowHeight = height;
+    shaderProgram->SetMat4("proj", glm::perspective(glm::radians(90.0f), (float)windowWidth / (float)windowHeight, 0.1f, 100.0f));
     glViewport(0, 0, width, height);
 }
 
@@ -125,8 +133,8 @@ int init()
     vertexShader = ShaderLoader::LoadShader(GL_VERTEX_SHADER, "Assets/Shaders/VertexShaders/VertShader.shader");
     fragmentShader = ShaderLoader::LoadShader(GL_FRAGMENT_SHADER, "Assets/Shaders/FragmentShaders/FragShader.shader");
 
-    shaderProgram = *(new ShaderProgram(new unsigned int[6] {vertexShader, fragmentShader, 0, 0, 0, 0}));
-    shaderProgram.LinkProgram();
+    shaderProgram = new ShaderProgram(new unsigned int[6] {vertexShader, fragmentShader, 0, 0, 0, 0});
+    shaderProgram->LinkProgram();
 
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
@@ -149,19 +157,24 @@ int main(void)
     unsigned int VAO = loadMesh();
     unsigned int texture = loadTexture();
 
-    glViewport(0, 0, 800, 600);
+    glViewport(0, 0, windowWidth, windowHeight);
 
-    std::cout << (*profiler).GetTotal() << '\n';
+    std::cout << "Initialisation completed in " << (*profiler).GetTotal() << " seconds.\n";
+    
+    glm::mat4 objPos = glm::mat4(1.0f);
+
+    shaderProgram->Use();
+    shaderProgram->SetMat4("proj", glm::perspective(glm::radians(90.0f), (float)windowWidth / (float)windowHeight, 0.1f, 100.0f));
 
     while (!glfwWindowShouldClose(window)) 
     {
-        (*profiler).SetLap();
         processInput();
 
         glClearColor(0.0f, 0.5f, 0.8f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        shaderProgram.Use();
+        objPos = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -(5.0f + sin(glfwGetTime()))));
+        shaderProgram->SetMat4("objPos", objPos);
 
         glBindTexture(GL_TEXTURE_2D, texture);
         glBindVertexArray(VAO);
@@ -171,9 +184,8 @@ int main(void)
 
         glfwPollEvents();
         glfwSwapBuffers(window);
-        std::cout << (1/(*profiler).GetLap()) << " FPS\n";
     }
-
+    
     glfwTerminate();
     return 0;
 }

@@ -6,6 +6,7 @@
 #include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <glm/gtc/type_ptr.hpp>
 
 enum Shaders { Vertex = 1, Fragment = 2 };
 
@@ -27,7 +28,8 @@ public:
 	bool LinkProgram();
 
 	void Use();
+
+	void SetMat4(const char* name, glm::mat4 value);
 };
 
 #endif // !GAMESHADERLOADER
-
