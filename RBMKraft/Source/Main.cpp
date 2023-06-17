@@ -17,6 +17,14 @@ static int windowWidth = 800;
 static int windowHeight = 600;
 static Mesh mesh = *(new Mesh());
 
+static double camPitch = 0;
+static double camYaw = 0;
+static glm::vec3 camPos = glm::vec3(0.0f);
+static glm::mat4 camMatrix = glm::mat4(1.0f);
+
+static double mouseSensitivity = 0.0025;
+static double keySensitivity = 0.05;
+
 unsigned int loadMesh()
 {
     unsigned int VAO;
@@ -87,6 +95,45 @@ void processInput()
     {
         glfwSetWindowShouldClose(window, GLFW_TRUE);
     }
+    double mousex, mousey;
+
+    glfwGetCursorPos(window, &mousex, &mousey);
+
+    if (!(camPitch + mousey * mouseSensitivity > glm::radians(90.0f)) && !(camPitch + mousey * mouseSensitivity < glm::radians(-90.0f)))
+    {
+        camPitch += mousey * mouseSensitivity;
+        
+    }
+
+    camYaw += mousex * mouseSensitivity;
+
+    glfwSetCursorPos(window, 0, 0);
+
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    {
+        camPos += glm::normalize(glm::vec3(-camMatrix[2].x, 0.0f, camMatrix[0].x)) * (float)keySensitivity;
+    }
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    {
+        camPos -= glm::normalize(glm::vec3(-camMatrix[2].x, 0.0f, camMatrix[0].x)) * (float)keySensitivity;
+    }
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    {
+        camPos += glm::normalize(glm::vec3(camMatrix[0].x, 0.0f, camMatrix[2].x)) * (float)keySensitivity;
+    }
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    {
+        camPos -= glm::normalize(glm::vec3(camMatrix[0].x, 0.0f, camMatrix[2].x)) * (float)keySensitivity;
+    }
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+    {
+        camPos += glm::vec3(0.0f, -1.0f, 0.0f) * (float)keySensitivity;
+    }
+    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+    {
+        camPos -= glm::vec3(0.0f, -1.0f, 0.0f) * (float)keySensitivity;
+    }
+    std::cout << camMatrix[2].z << "\n";
 }
 
 int init()
@@ -127,6 +174,10 @@ int init()
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
+
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     glEnable(GL_DEPTH_TEST);
@@ -154,6 +205,9 @@ int main(void)
     shaderProgram->Use();
     shaderProgram->SetMat4("proj", glm::perspective(glm::radians(90.0f), (float)windowWidth / (float)windowHeight, 0.1f, 100.0f));
 
+    camPitch = 0;
+    camYaw = 0;
+
     std::cout << "Initialisation completed in " << (*profiler).GetTotal() << " seconds.\n";
 
     while (!glfwWindowShouldClose(window)) 
@@ -164,9 +218,14 @@ int main(void)
         glClearColor(0.0f, 0.5f, 0.8f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        objPos = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -(3.0f + 2 * sin(glfwGetTime() * 0.5f))));
-        objPos = glm::rotate(objPos, (float)glfwGetTime(), glm::vec3(1.0f, 1.0f, 1.0f));
+        objPos = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -(3.0f + 2 /** sin(glfwGetTime() * 0.5f)*/)));
+        //objPos = glm::rotate(objPos, (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
         shaderProgram->SetMat4("objPos", objPos);
+
+        camMatrix = glm::rotate(glm::mat4(1.0f), (float)camPitch, glm::vec3(1.0f, 0.0f, 0.0f));
+        camMatrix = glm::rotate(camMatrix, (float)camYaw, glm::vec3(0.0f, 1.0f, 0.0f));
+        camMatrix = glm::translate(camMatrix, camPos);
+        shaderProgram->SetMat4("camPos", camMatrix);
 
         glBindTexture(GL_TEXTURE_2D, texture);
         glBindVertexArray(VAO);
@@ -176,7 +235,7 @@ int main(void)
 
         glfwPollEvents();
         glfwSwapBuffers(window);
-        std::cout << 1 / profiler->GetLap() << " FPS\n";
+        //std::cout << 1 / profiler->GetLap() << " FPS\n";
     }
     
     glfwTerminate();

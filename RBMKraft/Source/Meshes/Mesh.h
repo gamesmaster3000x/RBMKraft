@@ -6,7 +6,7 @@ class Mesh
 {
 public:
 	const void* vertices;
-	const unsigned int* indices;
+	const void* indices;
 	unsigned int vertexCount;
 	unsigned int indexCount;
 	
