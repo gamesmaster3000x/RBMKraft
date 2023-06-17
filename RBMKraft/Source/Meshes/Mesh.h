@@ -1,14 +1,16 @@
-#ifndef MESHSOURCE
-#define MESHSOURCE
+#ifndef VERTEX_SIZE
+#define VERTEX_SIZE (5 * sizeof(float))
+#define INDEX_SIZE sizeof(unsigned int)
 
 class Mesh
 {
 public:
-	const float* verts;
+	const void* vertices;
 	const unsigned int* indices;
 	unsigned int vertexCount;
-
-	Mesh(const float* verts = 0, const unsigned int* indices = 0, const unsigned int vertCount = 0);
+	unsigned int indexCount;
+	
+	Mesh(const void* verts = 0, const unsigned int vertCount = 0, const unsigned int* indices = 0, const unsigned int indexCount = 0);
 };
 
 #endif

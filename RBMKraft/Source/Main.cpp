@@ -9,46 +9,34 @@
 #include <Shaders/ShaderLoader.h>
 #include <Textures/stb_image.h>
 #include <Profiler/Profiler.h>
-
-float vertices[] = { //(X, Y, Z), Brightness, (UVX, UVY) 
-    0.5f,  -0.5f, 0.0f, 1.0f, 1.0f,//BR
-    -0.5f, -0.5f, 0.0f, 0.0f, 1.0f,//BL
-    -0.5f, 0.5f,  0.0f, 0.0f, 0.0f,//TL
-    0.5f,  0.5f,  0.0f, 1.0f, 0.0f //TR
-};
-
-unsigned int indices[] = {
-    0, 1, 2,
-    0, 2, 3
-};
-
+#include <Meshes/Mesh.h>
 
 static GLFWwindow* window;
 static ShaderProgram* shaderProgram;
 static int windowWidth = 800;
 static int windowHeight = 600;
+static Mesh mesh = *(new Mesh());
 
 unsigned int loadMesh()
 {
     unsigned int VAO;
     unsigned int VBO;
     unsigned int EBO;
-    
+
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
-
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, mesh.vertexCount * VERTEX_SIZE, mesh.vertices, GL_STATIC_DRAW);
 
     glGenBuffers(1, &EBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.indexCount * INDEX_SIZE, mesh.indices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, VERTEX_SIZE, (void*)0);
     glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, VERTEX_SIZE, (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
     return VAO;
@@ -141,6 +129,8 @@ int init()
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
+    glEnable(GL_DEPTH_TEST);
+
     return 1;
 }
 
@@ -158,32 +148,35 @@ int main(void)
     unsigned int texture = loadTexture();
 
     glViewport(0, 0, windowWidth, windowHeight);
-
-    std::cout << "Initialisation completed in " << (*profiler).GetTotal() << " seconds.\n";
     
     glm::mat4 objPos = glm::mat4(1.0f);
 
     shaderProgram->Use();
     shaderProgram->SetMat4("proj", glm::perspective(glm::radians(90.0f), (float)windowWidth / (float)windowHeight, 0.1f, 100.0f));
 
+    std::cout << "Initialisation completed in " << (*profiler).GetTotal() << " seconds.\n";
+
     while (!glfwWindowShouldClose(window)) 
     {
+        profiler->SetLap();
         processInput();
 
         glClearColor(0.0f, 0.5f, 0.8f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        objPos = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -(5.0f + sin(glfwGetTime()))));
+        objPos = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -(3.0f + 2 * sin(glfwGetTime() * 0.5f))));
+        objPos = glm::rotate(objPos, (float)glfwGetTime(), glm::vec3(1.0f, 1.0f, 1.0f));
         shaderProgram->SetMat4("objPos", objPos);
 
         glBindTexture(GL_TEXTURE_2D, texture);
         glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)0);
+        glDrawElements(GL_TRIANGLES, mesh.indexCount, GL_UNSIGNED_INT, (void*)0);
 
         glBindVertexArray(0);
 
         glfwPollEvents();
         glfwSwapBuffers(window);
+        std::cout << 1 / profiler->GetLap() << " FPS\n";
     }
     
     glfwTerminate();
