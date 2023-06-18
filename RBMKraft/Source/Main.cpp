@@ -23,7 +23,9 @@ static glm::vec3 camPos = glm::vec3(0.0f);
 static glm::mat4 camMatrix = glm::mat4(1.0f);
 
 static double mouseSensitivity = 0.0025;
-static double keySensitivity = 0.05;
+static double moveSpeed = 3;
+
+static double frameTime = 0;
 
 unsigned int loadMesh()
 {
@@ -111,27 +113,27 @@ void processInput()
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
     {
-        camPos += glm::normalize(glm::vec3(-camMatrix[2].x, 0.0f, camMatrix[0].x)) * (float)keySensitivity;
+        camPos += glm::normalize(glm::vec3(-camMatrix[2].x, 0.0f, camMatrix[0].x)) * (float)moveSpeed * (float)frameTime;
     }
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
     {
-        camPos -= glm::normalize(glm::vec3(-camMatrix[2].x, 0.0f, camMatrix[0].x)) * (float)keySensitivity;
+        camPos -= glm::normalize(glm::vec3(-camMatrix[2].x, 0.0f, camMatrix[0].x)) * (float)moveSpeed * (float)frameTime;
     }
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
     {
-        camPos += glm::normalize(glm::vec3(camMatrix[0].x, 0.0f, camMatrix[2].x)) * (float)keySensitivity;
+        camPos += glm::normalize(glm::vec3(camMatrix[0].x, 0.0f, camMatrix[2].x)) * (float)moveSpeed * (float)frameTime;
     }
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
     {
-        camPos -= glm::normalize(glm::vec3(camMatrix[0].x, 0.0f, camMatrix[2].x)) * (float)keySensitivity;
+        camPos -= glm::normalize(glm::vec3(camMatrix[0].x, 0.0f, camMatrix[2].x)) * (float)moveSpeed * (float)frameTime;
     }
     if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
     {
-        camPos += glm::vec3(0.0f, -1.0f, 0.0f) * (float)keySensitivity;
+        camPos += glm::vec3(0.0f, -1.0f, 0.0f) * (float)moveSpeed * (float)frameTime;
     }
     if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
     {
-        camPos -= glm::vec3(0.0f, -1.0f, 0.0f) * (float)keySensitivity;
+        camPos -= glm::vec3(0.0f, -1.0f, 0.0f) * (float)moveSpeed * (float)frameTime;
     }
 }
 
@@ -234,7 +236,7 @@ int main(void)
 
         glfwPollEvents();
         glfwSwapBuffers(window);
-        //std::cout << 1 / profiler->GetLap() << " FPS\n";
+        frameTime = profiler->GetLap();
     }
     
     glfwTerminate();
