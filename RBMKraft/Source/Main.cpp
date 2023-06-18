@@ -19,8 +19,6 @@ static int windowHeight = 600;
 static int wWidth = 800;
 static int wHeight = 600;
 
-static int fsWidth = 1920;
-static int fsHeight = 1080;
 static bool fs = false;
 static Mesh mesh = *(new Mesh());
 
