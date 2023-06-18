@@ -153,16 +153,16 @@ void processInput()
         {
             glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
             fs = false;
-            windowWidth = wWidth;
-            windowHeight = wHeight;
+            windowWidth = mode->width;
+            windowHeight = mode->height;
         }
         else
         {
             glfwSetWindowMonitor(window, nullptr, 100, 100, wWidth, wHeight, 60);
             glfwWindowHint(GLFW_DECORATED, true);
             fs = true;
-            windowWidth = fsWidth;
-            windowHeight = fsHeight;
+            windowWidth = wWidth;
+            windowHeight = wHeight;
         }
         fullscreenChange.SetLap();
     }
