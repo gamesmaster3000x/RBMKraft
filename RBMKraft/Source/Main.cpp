@@ -15,6 +15,13 @@ static GLFWwindow* window;
 static ShaderProgram* shaderProgram;
 static int windowWidth = 800;
 static int windowHeight = 600;
+
+static int wWidth = 800;
+static int wHeight = 600;
+
+static int fsWidth = 1920;
+static int fsHeight = 1080;
+static bool fs = false;
 static Mesh mesh = *(new Mesh());
 
 static double camPitch = 0;
@@ -26,6 +33,10 @@ static double mouseSensitivity = 0.0025;
 static double moveSpeed = 3;
 
 static double frameTime = 0;
+
+static Profiler fullscreenChange = *(new Profiler());
+
+static double fullscreenSwapTime = 1;
 
 unsigned int loadMesh()
 {
@@ -111,29 +122,51 @@ void processInput()
 
     glfwSetCursorPos(window, 0, 0);
 
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_W))
     {
         camPos += glm::normalize(glm::vec3(-camMatrix[2].x, 0.0f, camMatrix[0].x)) * (float)moveSpeed * (float)frameTime;
     }
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_S))
     {
         camPos -= glm::normalize(glm::vec3(-camMatrix[2].x, 0.0f, camMatrix[0].x)) * (float)moveSpeed * (float)frameTime;
     }
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_A))
     {
         camPos += glm::normalize(glm::vec3(camMatrix[0].x, 0.0f, camMatrix[2].x)) * (float)moveSpeed * (float)frameTime;
     }
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_D))
     {
         camPos -= glm::normalize(glm::vec3(camMatrix[0].x, 0.0f, camMatrix[2].x)) * (float)moveSpeed * (float)frameTime;
     }
-    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_SPACE))
     {
         camPos += glm::vec3(0.0f, -1.0f, 0.0f) * (float)moveSpeed * (float)frameTime;
     }
-    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT))
     {
         camPos -= glm::vec3(0.0f, -1.0f, 0.0f) * (float)moveSpeed * (float)frameTime;
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_F) && (fullscreenChange.GetLap() > fullscreenSwapTime))
+    {
+        GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+        const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+        if (fs)
+        {
+            glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+            fs = false;
+            windowWidth = wWidth;
+            windowHeight = wHeight;
+        }
+        else
+        {
+            glfwSetWindowMonitor(window, nullptr, 100, 100, wWidth, wHeight, 60);
+            glfwWindowHint(GLFW_DECORATED, true);
+            fs = true;
+            windowWidth = fsWidth;
+            windowHeight = fsHeight;
+        }
+        fullscreenChange.SetLap();
     }
 }
 
@@ -147,7 +180,8 @@ int init()
     }
     fprintf(stdout, "Sucessfully initialised GLFW.\n");
 
-    window = glfwCreateWindow(800, 600, "RBMKraft", NULL, NULL);
+    window = //glfwCreateWindow(windowWidth, windowHeight, "RBMKraft", NULL, NULL);
+    glfwCreateWindow(windowWidth, windowHeight, "RBMKraft", nullptr, nullptr);
     glfwMakeContextCurrent(window);
 
     fprintf(stdout, "Initialising GLAD...\n");
