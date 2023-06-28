@@ -1,11 +1,10 @@
 #include "ChunkMeshCtor.h"
 #include <iostream>
 
-const VertBuffer ChunkMeshCtor::GetVertexData()
+const std::vector<float> ChunkMeshCtor::GetVertexData()
 {
 	Mesh* mesh = new Mesh();
 	size_t bufSize = 0;
-	VertBuffer buf = { *new std::vector<float>, 0};
 
 	//Get the required buffer size
 	for (size_t i = 0; i < CHUNKSIZE * CHUNKSIZE * CHUNKSIZE; i++)
@@ -15,9 +14,9 @@ const VertBuffer ChunkMeshCtor::GetVertexData()
 	}
 
 	//Create buffer of appropriate size
-	std::vector<float> buffer = *new std::vector<float>;
+	std::vector<float> buffer = *new std::vector<float>(bufSize);
 
-
+	size_t offset = 0;
 	//Fill the buffer with vert info
 	for (size_t z = 0; z < CHUNKSIZE; z++)
 	{
@@ -27,10 +26,11 @@ const VertBuffer ChunkMeshCtor::GetVertexData()
 			{
 				for (size_t i = 0; i < mesh->vertices.size(); i += 3)
 				{
-					buffer.push_back(mesh->vertices[i] + x);
-					buffer.push_back(mesh->vertices[i+1] + y);
-					buffer.push_back(mesh->vertices[i+2] + z);
+					buffer[offset+i] = mesh->vertices[i] + x;
+					buffer[offset+i+1] = mesh->vertices[i+1] + y;
+					buffer[offset+i+2] = mesh->vertices[i+2] + z;
 				}
+				offset += mesh->vertices.size();
 			}
 		}
 	}
@@ -43,25 +43,20 @@ const VertBuffer ChunkMeshCtor::GetVertexData()
 			{
 				for (size_t i = 0; i < mesh->UVs.size(); i++)
 				{
-					buffer.push_back(mesh->UVs[i]);
+					buffer[offset+i] = mesh->UVs[i];
 				}
+				offset += mesh->UVs.size();
 			}
 		}
 	}
 
-	//Populate the buffer object
-
-	buf.ptr = buffer;
-	buf.size = bufSize * sizeof(float);
-
-	return buf;
+	return buffer;
 }
 
-const IndxBuffer ChunkMeshCtor::GetIndexData()
+const std::vector<unsigned int> ChunkMeshCtor::GetIndexData()
 {
 	Mesh* mesh = new Mesh();
 	size_t bufSize = 0;
-	IndxBuffer buf = { *new std::vector<unsigned int>, 0 };
 
 	//Get the required buffer size
 	for (size_t i = 0; i < CHUNKSIZE * CHUNKSIZE * CHUNKSIZE; i++)
@@ -70,9 +65,10 @@ const IndxBuffer ChunkMeshCtor::GetIndexData()
 	}
 
 	//Create buffer of appropriate size
-	std::vector<unsigned int> buffer = *new std::vector<unsigned int>;
+	std::vector<unsigned int> buffer = *new std::vector<unsigned int>(bufSize);
 
-	unsigned int indxOffset = 0;
+	size_t indxOffset = 0;
+	size_t ptrOffset = 0;
 
 	//Fill the buffer with vert info
 	for (size_t z = 0; z < CHUNKSIZE; z++)
@@ -83,17 +79,13 @@ const IndxBuffer ChunkMeshCtor::GetIndexData()
 			{
 				for (size_t i = 0; i < mesh->indices.size(); i++)
 				{
-					buffer.push_back(mesh->indices[i] + indxOffset);
+					buffer[ptrOffset+i] = (unsigned int)(mesh->indices[i] + indxOffset);
 				}
+				ptrOffset += mesh->indices.size();
 				indxOffset += mesh->vertices.size() / 3;
 			}
 		}
 	}
 
-	//Populate the buffer object
-
-	buf.ptr = buffer;
-	buf.size = bufSize * sizeof(unsigned int);
-
-	return buf;
+	return buffer;
 }

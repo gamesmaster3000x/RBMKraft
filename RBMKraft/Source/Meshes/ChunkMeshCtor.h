@@ -3,23 +3,11 @@
 
 #include <Meshes/Mesh.h>
 
-struct VertBuffer
-{
-	std::vector<float> ptr;
-	size_t size;
-};
-
-struct IndxBuffer
-{
-	std::vector<unsigned int> ptr;
-	size_t size;
-};
-
 class ChunkMeshCtor
 {
 public:
-	const VertBuffer GetVertexData();
-	const IndxBuffer GetIndexData();
+	const std::vector<float> GetVertexData();
+	const std::vector<unsigned int> GetIndexData();
 };
 
 #endif

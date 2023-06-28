@@ -21,8 +21,8 @@ static int wWidth = 800;
 static int wHeight = 600;
 
 ChunkMeshCtor mesh = *new ChunkMeshCtor();
-VertBuffer vertBuf;
-IndxBuffer indxBuf;
+std::vector<float> vertBuf;
+std::vector<unsigned int> indxBuf;
 
 static bool fs = false;
 static bool mh = true;
@@ -58,16 +58,16 @@ unsigned int loadMesh()
     glBindVertexArray(VAO);
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, vertBuf.size, vertBuf.ptr.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vertBuf.size() * sizeof(float), vertBuf.data(), GL_STATIC_DRAW);
 
     glGenBuffers(1, &EBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indxBuf.size, indxBuf.ptr.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indxBuf.size() * sizeof(float), indxBuf.data(), GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)(vertBuf.size / 5 * 3));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)(vertBuf.size() * sizeof(float) / 5 * 3));
     glEnableVertexAttribArray(1);
 
     return VAO;
@@ -108,7 +108,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
     windowWidth = width;
     windowHeight = height;
-    shaderProgram->SetMat4("proj", glm::perspective(glm::radians(90.0f), (float)windowWidth / (float)windowHeight, 0.1f, 100.0f));
+    shaderProgram->SetMat4("proj", glm::perspective(glm::radians(90.0f), (float)windowWidth / (float)windowHeight, 0.1f, 1000.0f));
     glViewport(0, 0, width, height);
 }
 
@@ -296,7 +296,7 @@ int main(void)
 
         glBindTexture(GL_TEXTURE_2D, texture);
         glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, indxBuf.ptr.size(), GL_UNSIGNED_INT, (void*)0);
+        glDrawElements(GL_TRIANGLES, indxBuf.size(), GL_UNSIGNED_INT, (void*)0);
 
         glBindVertexArray(0);
 
