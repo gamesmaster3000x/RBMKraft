@@ -25,6 +25,7 @@ VertBuffer vertBuf;
 IndxBuffer indxBuf;
 
 static bool fs = false;
+static bool mh = true;
 
 static double camPitch = 0;
 static double camYaw = 0;
@@ -37,8 +38,10 @@ static double moveSpeed = 3;
 static double frameTime = 0;
 
 static Profiler fullscreenChange = *(new Profiler());
+static Profiler mouseChange = *new Profiler;
 
-static double fullscreenSwapTime = 1;
+static double fullscreenSwapTime = 0.5;
+static double mouseSwapTime = 0.5;
 
 unsigned int loadMesh()
 {
@@ -111,47 +114,50 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 
 void processInput() 
 {
+    if (mh) {
+        double mousex, mousey;
+
+        glfwGetCursorPos(window, &mousex, &mousey);
+
+        if (!(camPitch + mousey * mouseSensitivity > glm::radians(90.0f)) && !(camPitch + mousey * mouseSensitivity < glm::radians(-90.0f)))
+        {
+            camPitch += mousey * mouseSensitivity;
+
+        }
+
+        camYaw += mousex * mouseSensitivity;
+
+        glfwSetCursorPos(window, 0, 0);
+
+        if (glfwGetKey(window, GLFW_KEY_W))
+        {
+            camPos += glm::normalize(glm::vec3(-camMatrix[2].x, 0.0f, camMatrix[0].x)) * (float)moveSpeed * (float)frameTime;
+        }
+        if (glfwGetKey(window, GLFW_KEY_S))
+        {
+            camPos -= glm::normalize(glm::vec3(-camMatrix[2].x, 0.0f, camMatrix[0].x)) * (float)moveSpeed * (float)frameTime;
+        }
+        if (glfwGetKey(window, GLFW_KEY_A))
+        {
+            camPos += glm::normalize(glm::vec3(camMatrix[0].x, 0.0f, camMatrix[2].x)) * (float)moveSpeed * (float)frameTime;
+        }
+        if (glfwGetKey(window, GLFW_KEY_D))
+        {
+            camPos -= glm::normalize(glm::vec3(camMatrix[0].x, 0.0f, camMatrix[2].x)) * (float)moveSpeed * (float)frameTime;
+        }
+        if (glfwGetKey(window, GLFW_KEY_SPACE))
+        {
+            camPos += glm::vec3(0.0f, -1.0f, 0.0f) * (float)moveSpeed * (float)frameTime;
+        }
+        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT))
+        {
+            camPos -= glm::vec3(0.0f, -1.0f, 0.0f) * (float)moveSpeed * (float)frameTime;
+        }
+    }
+
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     {
         glfwSetWindowShouldClose(window, GLFW_TRUE);
-    }
-    double mousex, mousey;
-
-    glfwGetCursorPos(window, &mousex, &mousey);
-
-    if (!(camPitch + mousey * mouseSensitivity > glm::radians(90.0f)) && !(camPitch + mousey * mouseSensitivity < glm::radians(-90.0f)))
-    {
-        camPitch += mousey * mouseSensitivity;
-        
-    }
-
-    camYaw += mousex * mouseSensitivity;
-
-    glfwSetCursorPos(window, 0, 0);
-
-    if (glfwGetKey(window, GLFW_KEY_W))
-    {
-        camPos += glm::normalize(glm::vec3(-camMatrix[2].x, 0.0f, camMatrix[0].x)) * (float)moveSpeed * (float)frameTime;
-    }
-    if (glfwGetKey(window, GLFW_KEY_S))
-    {
-        camPos -= glm::normalize(glm::vec3(-camMatrix[2].x, 0.0f, camMatrix[0].x)) * (float)moveSpeed * (float)frameTime;
-    }
-    if (glfwGetKey(window, GLFW_KEY_A))
-    {
-        camPos += glm::normalize(glm::vec3(camMatrix[0].x, 0.0f, camMatrix[2].x)) * (float)moveSpeed * (float)frameTime;
-    }
-    if (glfwGetKey(window, GLFW_KEY_D))
-    {
-        camPos -= glm::normalize(glm::vec3(camMatrix[0].x, 0.0f, camMatrix[2].x)) * (float)moveSpeed * (float)frameTime;
-    }
-    if (glfwGetKey(window, GLFW_KEY_SPACE))
-    {
-        camPos += glm::vec3(0.0f, -1.0f, 0.0f) * (float)moveSpeed * (float)frameTime;
-    }
-    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT))
-    {
-        camPos -= glm::vec3(0.0f, -1.0f, 0.0f) * (float)moveSpeed * (float)frameTime;
     }
 
     if (glfwGetKey(window, GLFW_KEY_F) && (fullscreenChange.GetLap() > fullscreenSwapTime))
@@ -160,20 +166,39 @@ void processInput()
         const GLFWvidmode* mode = glfwGetVideoMode(monitor);
         if (fs)
         {
-            glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
-            fs = false;
-            windowWidth = mode->width;
-            windowHeight = mode->height;
-        }
-        else
-        {
             glfwSetWindowMonitor(window, nullptr, 100, 100, wWidth, wHeight, 60);
             glfwWindowHint(GLFW_DECORATED, true);
-            fs = true;
+            fs = false;
             windowWidth = wWidth;
             windowHeight = wHeight;
         }
+        else
+        {
+            glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+            fs = true;
+            windowWidth = mode->width;
+            windowHeight = mode->height;
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            mh = true;
+        }
         fullscreenChange.SetLap();
+    }
+
+    if (!fs) {
+        if (glfwGetKey(window, GLFW_KEY_LEFT_ALT) && (mouseChange.GetLap() > mouseSwapTime))
+        {
+            if (mh)
+            {
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                mh = false;
+            }
+            else
+            {
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                mh = true;
+            }
+            mouseChange.SetLap();
+        }
     }
 }
 
