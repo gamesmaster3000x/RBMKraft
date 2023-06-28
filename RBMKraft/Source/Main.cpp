@@ -10,6 +10,7 @@
 #include <Textures/stb_image.h>
 #include <Profiler/Profiler.h>
 #include <Meshes/Mesh.h>
+#include <Meshes/ChunkMeshCtor.h>
 
 static GLFWwindow* window;
 static ShaderProgram* shaderProgram;
@@ -19,8 +20,11 @@ static int windowHeight = 600;
 static int wWidth = 800;
 static int wHeight = 600;
 
+ChunkMeshCtor mesh = *new ChunkMeshCtor();
+VertBuffer vertBuf;
+IndxBuffer indxBuf;
+
 static bool fs = false;
-static Mesh mesh = *(new Mesh());
 
 static double camPitch = 0;
 static double camYaw = 0;
@@ -42,20 +46,25 @@ unsigned int loadMesh()
     unsigned int VBO;
     unsigned int EBO;
 
+    Profiler meshCtor = *new Profiler;
+    vertBuf = mesh.GetVertexData();
+    indxBuf = mesh.GetIndexData();
+    std::cout << "Constructed mesh in " << meshCtor.GetTotal() << " seconds\n";
+
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, mesh.vertexCount * VERTEX_SIZE, mesh.vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vertBuf.size, vertBuf.ptr.data(), GL_STATIC_DRAW);
 
     glGenBuffers(1, &EBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.indexCount * INDEX_SIZE, mesh.indices, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indxBuf.size, indxBuf.ptr.data(), GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, VERTEX_SIZE, (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, VERTEX_SIZE, (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)(vertBuf.size / 5 * 3));
     glEnableVertexAttribArray(1);
 
     return VAO;
@@ -262,7 +271,7 @@ int main(void)
 
         glBindTexture(GL_TEXTURE_2D, texture);
         glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, mesh.indexCount, GL_UNSIGNED_INT, (void*)0);
+        glDrawElements(GL_TRIANGLES, indxBuf.ptr.size(), GL_UNSIGNED_INT, (void*)0);
 
         glBindVertexArray(0);
 

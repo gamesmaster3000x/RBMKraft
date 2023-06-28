@@ -1,54 +1,55 @@
 #include "Mesh.h"
 
-Mesh::Mesh(const void* verts, const unsigned int vertCount, const unsigned int* indices, const unsigned int indexCount) 
+Mesh::Mesh(const std::vector<float> verts, const std::vector<unsigned int> indices, const std::vector<float> UVs) 
 {
-	if (verts)
+	if (!verts.empty())
 	{
 		this->vertices = verts;
-		this->vertexCount = vertCount;
 	}
 	else
 	{
-		static const float arr[] = {
-			0.5f, -0.5f, 0.5f,  0.0f, 1.0f,//X+BR
-			0.5f, -0.5f, -0.5f, 1.0f, 1.0f,//X+BL
-			0.5f, 0.5f,  -0.5f, 1.0f, 0.0f,//X+TL
-			0.5f, 0.5f,  0.5f,  0.0f, 0.0f,//X+TR
+		float arr[] = {
+			0.5f, -0.5f, 0.5f,
+			0.5f, -0.5f, -0.5f,
+			0.5f, 0.5f,  -0.5f,
+			0.5f, 0.5f,  0.5f,
 
-			-0.5f, -0.5f, -0.5f, 0.0f, 1.0f,//X-BR
-			-0.5f, -0.5f, 0.5f,  1.0f, 1.0f,//X-BL
-			-0.5f, 0.5f,  0.5f,  1.0f, 0.0f,//X-TL
-			-0.5f, 0.5f,  -0.5f, 0.0f, 0.0f,//X-TR
+			-0.5f, -0.5f, -0.5f,
+			-0.5f, -0.5f, 0.5f,
+			-0.5f, 0.5f,  0.5f,
+			-0.5f, 0.5f,  -0.5f,
 
-			-0.5f, 0.5f, 0.5f,  0.0f, 1.0f,//Y+BR
-			0.5f,  0.5f, 0.5f,  1.0f, 1.0f,//Y+BL
-			0.5f,  0.5f, -0.5f, 1.0f, 0.0f,//Y+TL
-			-0.5f, 0.5f, -0.5f, 0.0f, 0.0f,//Y+TR
+			-0.5f, 0.5f, 0.5f,
+			0.5f,  0.5f, 0.5f,
+			0.5f,  0.5f, -0.5f,
+			-0.5f, 0.5f, -0.5f,
 
-			0.5f,  -0.5f, 0.5f,  0.0f, 1.0f,//Y-BR
-			-0.5f, -0.5f, 0.5f,  1.0f, 1.0f,//Y-BL
-			-0.5f, -0.5f, -0.5f, 1.0f, 0.0f,//Y-TL
-			0.5f,  -0.5f, -0.5f, 0.0f, 0.0f,//Y-TR
+			0.5f,  -0.5f, 0.5f,
+			-0.5f, -0.5f, 0.5f,
+			-0.5f, -0.5f, -0.5f,
+			0.5f,  -0.5f, -0.5f,
 
-			-0.5f, -0.5f, 0.5f, 0.0f, 1.0f,//Z+BR
-			0.5f,  -0.5f, 0.5f, 1.0f, 1.0f,//Z+BL
-			0.5f,  0.5f,  0.5f, 1.0f, 0.0f,//Z+TL
-			-0.5f, 0.5f,  0.5f, 0.0f, 0.0f,//Z+TR
+			-0.5f, -0.5f, 0.5f,
+			0.5f,  -0.5f, 0.5f,
+			0.5f,  0.5f,  0.5f,
+			-0.5f, 0.5f,  0.5f,
 
-			0.5f,  -0.5f, -0.5f, 0.0f, 1.0f,//Z-BR
-			-0.5f, -0.5f, -0.5f, 1.0f, 1.0f,//Z-BL
-			-0.5f, 0.5f,  -0.5f, 1.0f, 0.0f,//Z-TL
-			0.5f,  0.5f,  -0.5f, 0.0f, 0.0f,//Z-TR
+			0.5f,  -0.5f, -0.5f,
+			-0.5f, -0.5f, -0.5f,
+			-0.5f, 0.5f,  -0.5f,
+			0.5f,  0.5f,  -0.5f,
 		};
 
-		this->vertices = arr;
-		this->vertexCount = 24;
+		for (size_t i = 0; i < sizeof(arr) / sizeof(float); i++)
+		{
+			this->vertices.push_back(arr[i]);
+		}
+		this->vertices.shrink_to_fit();
 	}
 	
-	if (indices)
+	if (!indices.empty())
 	{
 		this->indices = indices;
-		this->indexCount = indexCount;
 	}
 	else
 	{
@@ -69,10 +70,58 @@ Mesh::Mesh(const void* verts, const unsigned int vertCount, const unsigned int* 
 			16, 18, 19,
 
 			20, 21, 22,
-			20, 22, 23
+			20, 22, 23,
 		};
 
-		this->indices = arr;
-		this->indexCount = 36;
+		for (size_t i = 0; i < sizeof(arr) / sizeof(unsigned int); i++)
+		{
+			this->indices.push_back(arr[i]);
+		}
+		this->indices.shrink_to_fit();
+	}
+
+	if (!UVs.empty()) 
+	{
+		this->UVs = UVs;
+	}
+	else
+	{
+		static const float arr[] = {
+			0.0f, 1.0f,
+			1.0f, 1.0f,
+			1.0f, 0.0f,
+			0.0f, 0.0f,
+
+			0.0f, 1.0f,
+			1.0f, 1.0f,
+			1.0f, 0.0f,
+			0.0f, 0.0f,
+
+			0.0f, 1.0f,
+			1.0f, 1.0f,
+			1.0f, 0.0f,
+			0.0f, 0.0f,
+
+			0.0f, 1.0f,
+			1.0f, 1.0f,
+			1.0f, 0.0f,
+			0.0f, 0.0f,
+
+			0.0f, 1.0f,
+			1.0f, 1.0f,
+			1.0f, 0.0f,
+			0.0f, 0.0f,
+
+			0.0f, 1.0f,
+			1.0f, 1.0f,
+			1.0f, 0.0f,
+			0.0f, 0.0f,
+		};
+
+		for (size_t i = 0; i < sizeof(arr) / sizeof(float); i++)
+		{
+			this->UVs.push_back(arr[i]);
+		}
+		this->UVs.shrink_to_fit();
 	}
 }
