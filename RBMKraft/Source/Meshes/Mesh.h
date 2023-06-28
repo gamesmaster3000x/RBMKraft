@@ -2,15 +2,16 @@
 #define VERTEX_SIZE (5 * sizeof(float))
 #define INDEX_SIZE sizeof(unsigned int)
 
+#include <vector>
+
 class Mesh
 {
 public:
-	const void* vertices;
-	const void* indices;
-	unsigned int vertexCount;
-	unsigned int indexCount;
+	std::vector<float> vertices;
+	std::vector<unsigned int> indices;
+	std::vector<float> UVs;
 	
-	Mesh(const void* verts = 0, const unsigned int vertCount = 0, const unsigned int* indices = 0, const unsigned int indexCount = 0);
+	Mesh(const std::vector<float> verts = *(new std::vector<float>()), const std::vector<unsigned int> indices = *(new std::vector<unsigned int>()), const std::vector<float> UVs = *(new std::vector<float>()));
 };
 
 #endif

@@ -10,6 +10,7 @@
 #include <Textures/stb_image.h>
 #include <Profiler/Profiler.h>
 #include <Meshes/Mesh.h>
+#include <Meshes/ChunkMeshCtor.h>
 
 static GLFWwindow* window;
 static ShaderProgram* shaderProgram;
@@ -19,8 +20,12 @@ static int windowHeight = 600;
 static int wWidth = 800;
 static int wHeight = 600;
 
+ChunkMeshCtor mesh = *new ChunkMeshCtor();
+std::vector<float> vertBuf;
+std::vector<unsigned int> indxBuf;
+
 static bool fs = false;
-static Mesh mesh = *(new Mesh());
+static bool mh = true;
 
 static double camPitch = 0;
 static double camYaw = 0;
@@ -33,8 +38,10 @@ static double moveSpeed = 3;
 static double frameTime = 0;
 
 static Profiler fullscreenChange = *(new Profiler());
+static Profiler mouseChange = *new Profiler;
 
-static double fullscreenSwapTime = 1;
+static double fullscreenSwapTime = 0.5;
+static double mouseSwapTime = 0.5;
 
 unsigned int loadMesh()
 {
@@ -42,20 +49,25 @@ unsigned int loadMesh()
     unsigned int VBO;
     unsigned int EBO;
 
+    Profiler meshCtor = *new Profiler;
+    vertBuf = mesh.GetVertexData();
+    indxBuf = mesh.GetIndexData();
+    std::cout << "Constructed mesh in " << meshCtor.GetTotal() << " seconds\n";
+
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, mesh.vertexCount * VERTEX_SIZE, mesh.vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vertBuf.size() * sizeof(float), vertBuf.data(), GL_STATIC_DRAW);
 
     glGenBuffers(1, &EBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.indexCount * INDEX_SIZE, mesh.indices, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indxBuf.size() * sizeof(float), indxBuf.data(), GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, VERTEX_SIZE, (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, VERTEX_SIZE, (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)(vertBuf.size() * sizeof(float) / 5 * 3));
     glEnableVertexAttribArray(1);
 
     return VAO;
@@ -96,53 +108,56 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
     windowWidth = width;
     windowHeight = height;
-    shaderProgram->SetMat4("proj", glm::perspective(glm::radians(90.0f), (float)windowWidth / (float)windowHeight, 0.1f, 100.0f));
+    shaderProgram->SetMat4("proj", glm::perspective(glm::radians(90.0f), (float)windowWidth / (float)windowHeight, 0.1f, 1000.0f));
     glViewport(0, 0, width, height);
 }
 
 void processInput() 
 {
+    if (mh) {
+        double mousex, mousey;
+
+        glfwGetCursorPos(window, &mousex, &mousey);
+
+        if (!(camPitch + mousey * mouseSensitivity > glm::radians(90.0f)) && !(camPitch + mousey * mouseSensitivity < glm::radians(-90.0f)))
+        {
+            camPitch += mousey * mouseSensitivity;
+
+        }
+
+        camYaw += mousex * mouseSensitivity;
+
+        glfwSetCursorPos(window, 0, 0);
+
+        if (glfwGetKey(window, GLFW_KEY_W))
+        {
+            camPos += glm::normalize(glm::vec3(-camMatrix[2].x, 0.0f, camMatrix[0].x)) * (float)moveSpeed * (float)frameTime;
+        }
+        if (glfwGetKey(window, GLFW_KEY_S))
+        {
+            camPos -= glm::normalize(glm::vec3(-camMatrix[2].x, 0.0f, camMatrix[0].x)) * (float)moveSpeed * (float)frameTime;
+        }
+        if (glfwGetKey(window, GLFW_KEY_A))
+        {
+            camPos += glm::normalize(glm::vec3(camMatrix[0].x, 0.0f, camMatrix[2].x)) * (float)moveSpeed * (float)frameTime;
+        }
+        if (glfwGetKey(window, GLFW_KEY_D))
+        {
+            camPos -= glm::normalize(glm::vec3(camMatrix[0].x, 0.0f, camMatrix[2].x)) * (float)moveSpeed * (float)frameTime;
+        }
+        if (glfwGetKey(window, GLFW_KEY_SPACE))
+        {
+            camPos += glm::vec3(0.0f, -1.0f, 0.0f) * (float)moveSpeed * (float)frameTime;
+        }
+        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT))
+        {
+            camPos -= glm::vec3(0.0f, -1.0f, 0.0f) * (float)moveSpeed * (float)frameTime;
+        }
+    }
+
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     {
         glfwSetWindowShouldClose(window, GLFW_TRUE);
-    }
-    double mousex, mousey;
-
-    glfwGetCursorPos(window, &mousex, &mousey);
-
-    if (!(camPitch + mousey * mouseSensitivity > glm::radians(90.0f)) && !(camPitch + mousey * mouseSensitivity < glm::radians(-90.0f)))
-    {
-        camPitch += mousey * mouseSensitivity;
-        
-    }
-
-    camYaw += mousex * mouseSensitivity;
-
-    glfwSetCursorPos(window, 0, 0);
-
-    if (glfwGetKey(window, GLFW_KEY_W))
-    {
-        camPos += glm::normalize(glm::vec3(-camMatrix[2].x, 0.0f, camMatrix[0].x)) * (float)moveSpeed * (float)frameTime;
-    }
-    if (glfwGetKey(window, GLFW_KEY_S))
-    {
-        camPos -= glm::normalize(glm::vec3(-camMatrix[2].x, 0.0f, camMatrix[0].x)) * (float)moveSpeed * (float)frameTime;
-    }
-    if (glfwGetKey(window, GLFW_KEY_A))
-    {
-        camPos += glm::normalize(glm::vec3(camMatrix[0].x, 0.0f, camMatrix[2].x)) * (float)moveSpeed * (float)frameTime;
-    }
-    if (glfwGetKey(window, GLFW_KEY_D))
-    {
-        camPos -= glm::normalize(glm::vec3(camMatrix[0].x, 0.0f, camMatrix[2].x)) * (float)moveSpeed * (float)frameTime;
-    }
-    if (glfwGetKey(window, GLFW_KEY_SPACE))
-    {
-        camPos += glm::vec3(0.0f, -1.0f, 0.0f) * (float)moveSpeed * (float)frameTime;
-    }
-    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT))
-    {
-        camPos -= glm::vec3(0.0f, -1.0f, 0.0f) * (float)moveSpeed * (float)frameTime;
     }
 
     if (glfwGetKey(window, GLFW_KEY_F) && (fullscreenChange.GetLap() > fullscreenSwapTime))
@@ -151,20 +166,39 @@ void processInput()
         const GLFWvidmode* mode = glfwGetVideoMode(monitor);
         if (fs)
         {
-            glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
-            fs = false;
-            windowWidth = mode->width;
-            windowHeight = mode->height;
-        }
-        else
-        {
             glfwSetWindowMonitor(window, nullptr, 100, 100, wWidth, wHeight, 60);
             glfwWindowHint(GLFW_DECORATED, true);
-            fs = true;
+            fs = false;
             windowWidth = wWidth;
             windowHeight = wHeight;
         }
+        else
+        {
+            glfwSetWindowMonitor(window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+            fs = true;
+            windowWidth = mode->width;
+            windowHeight = mode->height;
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            mh = true;
+        }
         fullscreenChange.SetLap();
+    }
+
+    if (!fs) {
+        if (glfwGetKey(window, GLFW_KEY_LEFT_ALT) && (mouseChange.GetLap() > mouseSwapTime))
+        {
+            if (mh)
+            {
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                mh = false;
+            }
+            else
+            {
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                mh = true;
+            }
+            mouseChange.SetLap();
+        }
     }
 }
 
@@ -262,7 +296,7 @@ int main(void)
 
         glBindTexture(GL_TEXTURE_2D, texture);
         glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, mesh.indexCount, GL_UNSIGNED_INT, (void*)0);
+        glDrawElements(GL_TRIANGLES, indxBuf.size(), GL_UNSIGNED_INT, (void*)0);
 
         glBindVertexArray(0);
 
